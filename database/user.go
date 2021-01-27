@@ -13,17 +13,21 @@ type CheckPassword struct {
 
 //这是用email登录的快捷方式
 func GetPasswordFromEmail(email string) *CheckPassword{
-	return GetPassword("email",email)
+	return GetPassword("email","'"+email+"'")
 }
 //这是用手机号登录的快捷方式
 func GetPasswordFromTelephone(telephone string) *CheckPassword{
 	return GetPassword("telephone",telephone)
 }
+//这是用用户名登录的快捷方式
+func GetPasswordFromName(name string) *CheckPassword{
+	return GetPassword("name","'"+name+"'")
+}
 //获取密码
 func GetPassword(focus string,detail string) *CheckPassword {
 	var tem CheckPassword
 
-	pre:=fmt.Sprintf("select password,md5salt from users_information where %s ='%s'",focus,detail)
+	pre:=fmt.Sprintf("select password,md5salt from users_information where %s =%s",focus,detail)
 	stmt,err:=DB.Query(pre)
 	defer stmt.Close()
 	if err != nil{
@@ -63,7 +67,6 @@ func GetUserSingleInformation(require string, focus string, detail string) strin
 	if err != nil {
 		LogError("GetUserSingleInformation Error",err)
 	}
-
 	var tem string
 	if stmt.Next(){
 		stmt.Scan(&tem)

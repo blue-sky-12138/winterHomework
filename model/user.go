@@ -2,6 +2,7 @@ package model
 
 import (
 	"WinterHomework/database"
+	"regexp"
 	"strings"
 )
 
@@ -10,18 +11,23 @@ func GetUserPassword(detail string)*database.CheckPassword{
 	var tem *database.CheckPassword
 	if strings.Contains(detail,"@"){
 		tem=database.GetPasswordFromEmail(detail)
-	}else {
-		tem=database.GetPasswordFromTelephone(detail)
+	}else{
+		reg:=regexp.MustCompile("[^0-9]")
+		if reg.MatchString(detail){
+			tem=database.GetPasswordFromName(detail)
+		}else{
+			tem=database.GetPasswordFromTelephone(detail)
+		}
 	}
 	return tem
 }
 
 //检查是否已被注册
-func CheckRegisterOrNot(detail string) string {
-	if strings.Contains(detail,"@"){
-		return database.GetUserSingleInformation("email","email","'"+detail+"'")
+func CheckRegisterOrNot(focus string,detail string) string {
+	if focus=="telephone"{
+		return database.GetUserSingleInformation(focus,focus,detail)
 	}else {
-		return database.GetUserSingleInformation("telephone","telephone",detail)
+		return database.GetUserSingleInformation(focus,focus,"'"+detail+"'")
 	}
 }
 

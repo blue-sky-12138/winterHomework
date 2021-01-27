@@ -7,7 +7,7 @@ import(
 )
 
 func RoutersEntrance(){
-	//http://121.196.155.183/serve
+	//http://121.196.155.183:8000/serve
 	router:=gin.Default()
 	router.Use(middleware.Cors())
 
@@ -15,5 +15,5 @@ func RoutersEntrance(){
 
 	router.POST("/serve/register",controller.Register)
 
-	router.Run(":8080")
+	router.Run(":8000")
 }

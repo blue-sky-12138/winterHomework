@@ -20,6 +20,8 @@ func OpenMysql(){
 		fmt.Println(err)
 		panic("数据库连接错误")
 	}
+	db.SetMaxOpenConns(1000)
+	db.SetConnMaxIdleTime(100)
 	DB=db
 }
 
