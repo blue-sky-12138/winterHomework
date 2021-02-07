@@ -10,10 +10,9 @@ import (
 //获取视频评论
 func GetVideoComments(context *gin.Context) {
 	bvCode:=context.Query("bv_code")
-	videoId:=model.GetVideoId(bvCode)
-	topComment:=model.GetHotVideoComments(videoId)
-	hotComments:=model.GetHotVideoComments(videoId)
-	commonComments:=model.GetCommonVideoComments(videoId)
+	topComment:=model.GetHotVideoComments(bvCode)
+	hotComments:=model.GetHotVideoComments(bvCode)
+	commonComments:=model.GetCommonVideoComments(bvCode)
 	var resp utilities.Resp
 	resp.Code=500
 	resp.Message="成功接受请求"
