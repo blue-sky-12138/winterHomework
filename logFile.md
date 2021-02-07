@@ -1,2 +1,2 @@
-[GIN-debug]2021/01/27 11:12:49 [Insert LogRegisterData Error] Error 1062: Duplicate entry '12345678901' for key 'telephone'
-[GIN-debug]2021/01/27 11:14:09 [Insert LogRegisterData Error] Error 1062: Duplicate entry '0' for key 'telephone'
+[GIN-debug]2021/01/30 09:52:53 [GetPassword stmt Error] Error 1064: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '%s =%s' at line 1
+r beginning of object key string

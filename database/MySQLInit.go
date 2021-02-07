@@ -1,16 +1,13 @@
 package database
 
-import(
+import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"log"
-	"os"
 )
 
 var(
 	DB *sql.DB
-	LogFile *log.Logger
 )
 
 func OpenMysql(){
@@ -23,21 +20,4 @@ func OpenMysql(){
 	db.SetMaxOpenConns(1000)
 	db.SetConnMaxIdleTime(100)
 	DB=db
-}
-
-func LogInit(){
-	File,err:=os.OpenFile("logFile.md" ,os.O_RDWR, os.ModePerm)
-	if err!=nil{
-		fmt.Println(err)
-		panic("打开日志失败")
-	}
-	logFile := log.New(File,"[GIN-debug]",log.Ldate | log.Ltime)
-	LogFile =logFile
-}
-
-func LogError(detail string,err error){
-	detail="["+detail+"]"
-	log.Printf(detail,err,"\n")
-
-	LogFile.Println(detail,err)
 }

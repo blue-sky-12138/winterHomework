@@ -2,14 +2,15 @@ package main
 
 import(
 	"WinterHomework/database"
-	"WinterHomework/router"
+	"WinterHomework/control"
+	"WinterHomework/utilities"
 )
 
 func main(){
 	database.OpenMysql()
 	defer database.DB.Close()
 
-	database.LogInit()
+	utilities.LogInit()
 
-	router.RoutersEntrance()
+	control.RoutersEntrance()
 }

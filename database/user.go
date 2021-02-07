@@ -1,40 +1,21 @@
 package database
 
-import "fmt"
+import (
+	"WinterHomework/utilities"
+	"fmt"
+)
 
-type UserInformation struct {
-	UserName string `json:"name"`
-
-}
-type CheckPassword struct {
-	Password string
-	Md5salt  int64
-}
-
-//这是用email登录的快捷方式
-func GetPasswordFromEmail(email string) *CheckPassword{
-	return GetPassword("email","'"+email+"'")
-}
-//这是用手机号登录的快捷方式
-func GetPasswordFromTelephone(telephone string) *CheckPassword{
-	return GetPassword("telephone",telephone)
-}
-//这是用用户名登录的快捷方式
-func GetPasswordFromName(name string) *CheckPassword{
-	return GetPassword("name","'"+name+"'")
-}
 //获取密码
-func GetPassword(focus string,detail string) *CheckPassword {
-	var tem CheckPassword
-
+func GetPassword(focus string,detail string) *utilities.LoginCheck {
+	var tem utilities.LoginCheck
 	pre:=fmt.Sprintf("select password,md5salt from users_information where %s =%s",focus,detail)
-	stmt,err:=DB.Query(pre)
-	defer stmt.Close()
+	rows,err:=DB.Query(pre)
+	defer rows.Close()
 	if err != nil{
-		LogError("GetPassword Error",err)
+		utilities.LogError("GetPassword Error",err)
 	}
-	if stmt.Next(){
-		stmt.Scan(&tem.Password,&tem.Md5salt)
+	if rows.Next(){
+		rows.Scan(&tem.Password,&tem.Md5salt)
 	}
 	return &tem
 }
@@ -46,13 +27,13 @@ func LogRegisterData(name string, telephone int64, email string, password string
 	stmt,err:=DB.Prepare(pre)
 	defer stmt.Close()
 	if err != nil {
-		LogError("Prepare LogRegisterData Error",err)
+		utilities.LogError("Prepare LogRegisterData Error",err)
 		return false
 	}
 
 	_,err=stmt.Exec()
 	if err != nil {
-		LogError("Insert LogRegisterData Error",err)
+		utilities.LogError("Insert LogRegisterData Error",err)
 		return false
 	}
 
@@ -62,14 +43,26 @@ func LogRegisterData(name string, telephone int64, email string, password string
 //获取某个用户的某个信息
 func GetUserSingleInformation(require string, focus string, detail string) string {
 	pre:=fmt.Sprintf("select %s from users_information where %s =%s",require,focus,detail)
-	stmt,err:=DB.Query(pre)
-	defer stmt.Close()
+	rows,err:=DB.Query(pre)
+	defer rows.Close()
 	if err != nil {
-		LogError("GetUserSingleInformation Error",err)
+		utilities.LogError("GetUserSingleInformation Error",err)
 	}
 	var tem string
-	if stmt.Next(){
-		stmt.Scan(&tem)
+	if rows.Next(){
+		rows.Scan(&tem)
 	}
 	return tem
+}
+
+//更新用户信息
+func ChangeUserInformation(name string,focus string,detail string) bool{
+	pre:=fmt.Sprintf("update users_information set %s = %s where name ='%s'",focus,detail,name)
+	stmt,err:=DB.Prepare(pre)
+	if err!=nil{
+		utilities.LogError("ChangeUserInformation Error",err)
+		return false
+	}
+	stmt.Exec()
+	return true
 }
