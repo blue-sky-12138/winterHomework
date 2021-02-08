@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.1](https://github.com/blue-sky-12138/winterHomework/compare/v1.1.0...v1.0.1) (2021-02-08)
+
+
+### Bug Fixes
+
+* **get hot, common comments:** sperate hot, common comments after get all comments except the top ([5cf93b0](https://github.com/blue-sky-12138/winterHomework/commit/5cf93b09c6081e9cf4fb6450c00fa9d1c02df511))
+
 # 1.1.0 (2021-02-07)
 
 
