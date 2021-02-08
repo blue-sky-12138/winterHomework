@@ -4,21 +4,32 @@ import (
 	"WinterHomework/model"
 	"WinterHomework/utilities"
 	"github.com/gin-gonic/gin"
-	"path"
 )
 
 //获取视频评论
 func GetVideoComments(context *gin.Context) {
+	var(
+		topComments []utilities.MetaComment			//置顶评论
+		hotComments []utilities.MetaComment			//热门评论
+		commonComments []utilities.MetaComment		//平平无奇的评论
+	)
 	bvCode:=context.Query("bv_code")
-	topComment:=model.GetHotVideoComments(bvCode)
-	hotComments:=model.GetHotVideoComments(bvCode)
-	commonComments:=model.GetCommonVideoComments(bvCode)
+	topComments = model.GetTopVideoComments(bvCode)
+	normalComments:=model.GetHotVideoComments(bvCode)	//获取非置顶评论
+	for _, value := range normalComments{			//遍历分离热门评论(这里热门的判断条件为点赞数>=10)
+		if value.Likes >= 10{
+			hotComments = append(hotComments, value)
+		}else {
+			commonComments = append(commonComments, value)
+		}
+	}
+
 	var resp utilities.Resp
 	resp.Code=500
 	resp.Message="成功接受请求"
-	resp.Data["top_comment"]=topComment
-	resp.Data["hot_comments"]=hotComments
-	resp.Data["common_comments"]=commonComments
+	resp.Data["top_comment"] = topComments
+	resp.Data["hot_comments"] = hotComments
+	resp.Data["common_comments"] = commonComments
 	context.JSON(200,resp)
 }
 
@@ -27,17 +38,3 @@ func GetVideoInformation(context *gin.Context) {
 	//tem:=model.GetBriefVideoInformation()
 }
 
-//获取视频文件
-func GetVideoFile(context *gin.Context) {
-	var tem utilities.GetVideoFile
-	context.ShouldBindUri(&tem)
-	if tem.BvCode == "" && tem.FileName ==  ""{
-		var resp utilities.Resp
-		resp.Code = 401
-		resp.Message = "路径为空！"
-		context.JSON(200,resp)
-	}else{
-		filePath:=path.Join("./static",tem.BvCode,tem.FileName)
-		context.File(filePath)
-	}
-}
