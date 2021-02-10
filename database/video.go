@@ -258,7 +258,7 @@ func commentAuthorInformation(author *utilities.CommentsAuthorInformation)  {
 func commentLikes(commentType int, commentId *int64) *int64 {
 	var sum int64
 	pre := "select sum(likes) as likes_sum from likes_videos_comments_relationship " +
-		fmt.Sprintf("where comments_id = %d and comments_type = %d",*commentId,commentType)
+		fmt.Sprintf("where comments_id = %d and comments_type = %d and likes = 1",*commentId,commentType)
 	rows,err := DB.Query(pre)
 	defer rows.Close()
 	if err != nil {
