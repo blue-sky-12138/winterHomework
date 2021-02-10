@@ -36,6 +36,7 @@ type VideoAuthorInformation struct {
 	Signature string		`json:"signature"`	//个性签名
 	Vip int					`json:"vip"`		//是否是大大大会员
 	Level int				`json:"level"`		//几级号
+	HeadPath string			`json:"head_path"`	//头像地址
 	Position string			`json:"position"`	//在作品中的职位，用于联合投稿的情况
 }
 
@@ -48,6 +49,6 @@ type VideoInformation struct {
 	Title string 						`json:"title"`			//标题
 	Brief string						`json:"brief"`			//简介
 	Plays int64							`json:"plays"`			//播放量
-	Author	VideoAuthorInformation		`json:"author"`			//作者信息
+	Author	[]VideoAuthorInformation	`json:"author"`			//作者信息
 	Common								`json:"common"`			//通用信息
 }
