@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/blue-sky-12138/winterHomework/compare/v1.0.1...v1.2.0) (2021-02-10)
+
+
+### Features
+
+* **video's detailed information:** you can get detailed video's information now ([db895ca](https://github.com/blue-sky-12138/winterHomework/commit/db895cad077138e22da7ca26d0a043ce1c4f2ab2))
+
+
+### Bug Fixes
+
+* **get comments likes:** when get likes if it will noly sum where likes = 1 ([15b77fd](https://github.com/blue-sky-12138/winterHomework/commit/15b77fd99332435227bdbeab4eac4f6c53ce88a6))
+
 ## [1.1.0](https://github.com/blue-sky-12138/winterHomework/compare/v1.0.1...v1.1.0) (2021-02-10)
 
 
