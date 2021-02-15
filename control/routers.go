@@ -31,6 +31,7 @@ func RoutersEntrance(){
 		video.GET("/comment", serve.GetVideoComments)			//获取视频评论
 		video.GET("/information", serve.GetVideoInformation)		//获取视频的元数据
 		video.GET("/barrage",serve.GetVideoBarrages)				//获取视频弹幕
+		video.GET("/path",serve.GetVideoPath)					//获取视频地址
 	}
 
 	download := router.Group("/serve/download")

@@ -70,8 +70,24 @@ func GetVideoBarrages(context *gin.Context) {
 	bvCode := context.Query("bv_code")
 	p,_ := strconv.Atoi(context.Query("p"))
 
-	data := model.GetVideoBarrages(bvCode,p)
+	data := *model.GetVideoBarrages(bvCode,p)
+
 	resp.Code = 700
+	resp.Message = "成功接受请求"
+	resp.Data["data"] = data
+	context.JSON(200,resp)
+}
+
+//获取视频地址
+func GetVideoPath(context *gin.Context) {
+	var resp utilities.Resp
+	resp.Data = make(map[string]interface{})	//防止map为空
+
+	bvCode := context.Query("bv_code")
+
+	data := *model.GetVideoPath(bvCode)
+
+	resp.Code = 800
 	resp.Message = "成功接受请求"
 	resp.Data["data"] = data
 	context.JSON(200,resp)

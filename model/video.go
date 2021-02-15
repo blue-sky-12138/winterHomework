@@ -29,8 +29,13 @@ func GetHotVideoComments(bvCode string) *[]utilities.MetaComment {
 }
 
 //获取视频弹幕
-//p为分集数
 func GetVideoBarrages(bvCode string,p int) *[]utilities.VideoBarrage {
 	videoId := database.VideosId(bvCode)
 	return database.VideoBarrages(videoId,p)
+}
+
+//获取视频地址及相关信息
+func GetVideoPath(bvCode string) *[]utilities.VideoPathInformation {
+	videoId := database.VideosId(bvCode)
+	return database.VideoPath(videoId)
 }

@@ -44,11 +44,30 @@ type VideoAuthorInformation struct {
 type VideoInformation struct {
 	Id int64							`json:"id"`				//视频id
 	BvCode string						`json:"bv_code"`		//bv号
-	VideoPath string					`json:"video_path"`		//视频文件地址
 	CoverPath string					`json:"cover_path"`		//封面文件地址
 	Title string 						`json:"title"`			//标题
 	Brief string						`json:"brief"`			//简介
 	Plays int64							`json:"plays"`			//播放量
+	P int								`json:"p"`				//该视频的分集数
 	Author	[]VideoAuthorInformation	`json:"author"`			//作者信息
 	Common								`json:"common"`			//通用信息
+}
+
+//视频路径信息结构体
+type VideoPathInformation struct {
+	Path string	`json:"path"`	//视频地址
+	Name string `json:"name"`	//视频名
+}
+
+//弹幕结构体
+type VideoBarrage struct {
+	Id int64				`json:"id"`			//弹幕id
+	DateTime string 		`json:"date_time"`	//弹幕发表日期
+	VideoTime string 		`json:"video_time"`	//弹幕在视频中出现的时间点
+	UsersId int64			`json:"users_id"`
+	Content string 			`json:"content"`	//弹幕内容
+	Type int 				`json:"type"`		//弹幕类型
+	Size int				`json:"size"`		//弹幕字体大小
+	Pattern int				`json:"pattern"`	//弹幕飘出表现形式
+	Color int				`json:"color"`		//弹幕颜色
 }

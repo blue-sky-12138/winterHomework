@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-//仅在本包内使用
 //获取视频id
 func VideosId(bvCode string) int64 {
 	var id int64
@@ -24,6 +23,27 @@ func VideosId(bvCode string) int64 {
 	return id
 }
 
+//获取视频地址
+//p为分集数
+func VideoPath(videoId int64) *[]utilities.VideoPathInformation {
+	var (
+		res []utilities.VideoPathInformation		//返回结果
+		tem utilities.VideoPathInformation			//临时存储获取的地址
+	)
+	pre := fmt.Sprintf("select video_path,video_name from videos_path where videos_id = %d ",videoId)
+	rows,err := DB.Query(pre)
+	if err != nil {
+		utilities.LogError("GetVideoPath Error",err)
+	}
+
+	if rows.Next() {
+		rows.Scan(&tem.Path,&tem.Name)
+		res = append(res,tem)
+	}
+
+	return &res
+}
+
 //获取视频的详细信息
 func DetailedVideoInformation(bvCode string) *utilities.VideoInformation {
 	var (
@@ -34,7 +54,7 @@ func DetailedVideoInformation(bvCode string) *utilities.VideoInformation {
 	)
 
 	//获取视频元数据
-	preMeta := "select id,video_path,cover_path,title,brief,plays,date_time,p,author_id,joint_work " +
+	preMeta := "select id,cover_path,title,brief,plays,date_time,p,author_id,joint_work " +
 		fmt.Sprintf("from videos_information where bv_code = '%s'",bvCode)
 	rowsMeta,err := DB.Query(preMeta)
 	if err != nil {
@@ -42,7 +62,7 @@ func DetailedVideoInformation(bvCode string) *utilities.VideoInformation {
 	}
 	defer rowsMeta.Close()
 	if rowsMeta.Next() {
-		rowsMeta.Scan(&res.Id,&res.VideoPath,&res.CoverPath,&res.Title,&res.Brief,&res.Plays,&temTime,&res.P,&mapAuthor.Id,&jointWork)
+		rowsMeta.Scan(&res.Id,&res.CoverPath,&res.Title,&res.Brief,&res.Plays,&temTime,&res.P,&mapAuthor.Id,&jointWork)
 	}
 	//获取时间
 	res.Date = temTime.Format("2006-01-02 15:04:05")
@@ -136,7 +156,7 @@ func BriefVideoInformation(start int,count int) *[]utilities.VideoInformation {
 		tem utilities.VideoInformation
 		res []utilities.VideoInformation
 	)
-	pre:="select v.bv_code,v.video_path,v.cover_path,v.title,v.plays,v.date_time,v.author_id,u.name" +
+	pre:="select v.bv_code,v.cover_path,v.title,v.plays,v.date_time,v.author_id,u.name" +
 		"from videos_information v join users_information u on v.author_id = u.id " +
 		fmt.Sprintf("order by plays desc limit %d,%d",start,count)
 	rows,err:=DB.Query(pre)
@@ -146,7 +166,7 @@ func BriefVideoInformation(start int,count int) *[]utilities.VideoInformation {
 	}
 
 	for rows.Next(){
-		rows.Scan(&tem.BvCode,&tem.VideoPath,&tem.CoverPath,&tem.Title,&tem.Brief,&tem.Plays)
+		rows.Scan(&tem.BvCode,&tem.CoverPath,&tem.Title,&tem.Brief,&tem.Plays)
 		res=append(res,tem)
 	}
 	return &res
@@ -271,6 +291,7 @@ func commentLikes(commentType int, commentId *int64) *int64 {
 }
 
 //获取视频的弹幕
+//p为分集数
 func VideoBarrages(videoId int64,p int) *[]utilities.VideoBarrage {
 	var (
 		res []utilities.VideoBarrage  		//返回结果
