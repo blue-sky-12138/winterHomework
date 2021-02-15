@@ -18,10 +18,19 @@ func GetDetailedVideoInformation(bvCode string) *utilities.VideoInformation {
 
 //获取置顶评论
 func GetTopVideoComments(bvCode string) *[]utilities.MetaComment {
-	return database.VideoComments(bvCode," and top = 1 ")
+	videoId := database.VideosId(bvCode)
+	return database.VideoComments(videoId," and top = 1 ")
 }
 
 //获取非置顶评论
 func GetHotVideoComments(bvCode string) *[]utilities.MetaComment {
-	return database.VideoComments(bvCode," and top = 0 ")
+	videoId := database.VideosId(bvCode)
+	return database.VideoComments(videoId," and top = 0 ")
+}
+
+//获取视频弹幕
+//p为分集数
+func GetVideoBarrages(bvCode string,p int) *[]utilities.VideoBarrage {
+	videoId := database.VideosId(bvCode)
+	return database.VideoBarrages(videoId,p)
 }

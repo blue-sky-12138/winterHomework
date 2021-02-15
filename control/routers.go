@@ -15,7 +15,7 @@ func RoutersEntrance(){
 
 	//http://121.196.155.183:8000/serve
 	router := gin.Default()
-	router.Static("static","./static/")		//加载静态文件夹
+	router.Static("static","./static/")			//加载静态文件夹
 	router.StaticFile("favicon.ico", "./static/favicon.ico")	//加载网页图标
 	router.Use(middleware.Cors())								//跨域中间件
 
@@ -26,10 +26,11 @@ func RoutersEntrance(){
 		//user.PUT("/serve/user/update", serve.Update)			//更新个人信息
 	}
 
-	video := router.Group("/serve/video")							//视频服务
+	video := router.Group("/serve/video")					//视频服务
 	{
-		video.GET("/comment", serve.GetVideoComments)	//获取视频评论
-		video.GET("", serve.GetVideoInformation)			//获取视频的元数据
+		video.GET("/comment", serve.GetVideoComments)			//获取视频评论
+		video.GET("/information", serve.GetVideoInformation)		//获取视频的元数据
+		video.GET("/barrage",serve.GetVideoBarrages)				//获取视频弹幕
 	}
 
 	download := router.Group("/serve/download")

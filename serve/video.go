@@ -4,6 +4,7 @@ import (
 	"WinterHomework/model"
 	"WinterHomework/utilities"
 	"github.com/gin-gonic/gin"
+	"strconv"
 )
 
 //获取视频评论
@@ -13,7 +14,7 @@ func GetVideoComments(context *gin.Context) {
 		hotComments []utilities.MetaComment			//热门评论
 		commonComments []utilities.MetaComment		//平平无奇的评论
 	)
-	bvCode:=context.Query("bv_code")
+	bvCode := context.Query("bv_code")
 	topComments = *model.GetTopVideoComments(bvCode)
 	normalComments := *model.GetHotVideoComments(bvCode)	//获取非置顶评论
 	for _, value := range normalComments{			//遍历分离热门评论(这里热门的判断条件为点赞数>=10)
@@ -27,8 +28,8 @@ func GetVideoComments(context *gin.Context) {
 	var resp utilities.Resp
 	resp.Data = make(map[string]interface{})	//防止map为空
 
-	resp.Code=500
-	resp.Message="成功接受请求"
+	resp.Code = 500
+	resp.Message ="成功接受请求"
 	resp.Data["top_comment"] = topComments
 	resp.Data["hot_comments"] = hotComments
 	resp.Data["common_comments"] = commonComments
@@ -61,3 +62,17 @@ func GetVideoInformation(context *gin.Context) {
 	}
 }
 
+//获取视频弹幕
+func GetVideoBarrages(context *gin.Context) {
+	var resp utilities.Resp
+	resp.Data = make(map[string]interface{})	//防止map为空
+
+	bvCode := context.Query("bv_code")
+	p,_ := strconv.Atoi(context.Query("p"))
+
+	data := model.GetVideoBarrages(bvCode,p)
+	resp.Code = 700
+	resp.Message = "成功接受请求"
+	resp.Data["data"] = data
+	context.JSON(200,resp)
+}

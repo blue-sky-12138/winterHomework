@@ -9,7 +9,7 @@ import (
 
 //仅在本包内使用
 //获取视频id
-func videosId(bvCode string) int64 {
+func VideosId(bvCode string) int64 {
 	var id int64
 	pre := fmt.Sprintf("select id from videos_information where bv_code = '%s' ",bvCode)
 	rows,err := DB.Query(pre)
@@ -34,7 +34,7 @@ func DetailedVideoInformation(bvCode string) *utilities.VideoInformation {
 	)
 
 	//获取视频元数据
-	preMeta := "select id,video_path,cover_path,title,brief,plays,date_time,author_id,joint_work " +
+	preMeta := "select id,video_path,cover_path,title,brief,plays,date_time,p,author_id,joint_work " +
 		fmt.Sprintf("from videos_information where bv_code = '%s'",bvCode)
 	rowsMeta,err := DB.Query(preMeta)
 	if err != nil {
@@ -42,7 +42,7 @@ func DetailedVideoInformation(bvCode string) *utilities.VideoInformation {
 	}
 	defer rowsMeta.Close()
 	if rowsMeta.Next() {
-		rowsMeta.Scan(&res.Id,&res.VideoPath,&res.CoverPath,&res.Title,&res.Brief,&res.Plays,&temTime,&mapAuthor.Id,&jointWork)
+		rowsMeta.Scan(&res.Id,&res.VideoPath,&res.CoverPath,&res.Title,&res.Brief,&res.Plays,&temTime,&res.P,&mapAuthor.Id,&jointWork)
 	}
 	//获取时间
 	res.Date = temTime.Format("2006-01-02 15:04:05")
@@ -153,14 +153,13 @@ func BriefVideoInformation(start int,count int) *[]utilities.VideoInformation {
 }
 
 //获取视频评论
-func VideoComments(bvCode string,limit string) *[]utilities.MetaComment {
+func VideoComments(videoId int64,limit string) *[]utilities.MetaComment {
 	var(
 		temMeta utilities.MetaComment									//存储一级评论的临时体
 		temReply utilities.ReplyComment									//存储楼中楼评论的临时体
 		temTime time.Time												//临时存储日期
 		res []utilities.MetaComment										//结果
 		mapAuthor = make(map[int64]utilities.CommentsAuthorInformation)	//用于存储已查询到的用户信息，防止重复查询
-		videoId = videosId(bvCode)										//视频id
 	)
 	var (				//直接声明变量，后续操作就不用短变量声明而是直接赋值
 		err error
@@ -269,4 +268,30 @@ func commentLikes(commentType int, commentId *int64) *int64 {
 		rows.Scan(&sum)
 	}
 	return &sum
+}
+
+//获取视频的弹幕
+func VideoBarrages(videoId int64,p int) *[]utilities.VideoBarrage {
+	var (
+		res []utilities.VideoBarrage  		//返回结果
+		temBarrage	utilities.VideoBarrage	//临时存储获取的弹幕信息
+		temDate time.Time					//临时存储DateTime
+	)
+	pre := "select id,date_time,video_time,users_id,content,type,size,pattern,color " +
+		fmt.Sprintf("from videos_barrages where videos_id = %d and p = %d",videoId,p)
+	rows,err := DB.Query(pre)
+	if err != nil {
+		utilities.LogError("GetVideoBarrages Error",err)
+	}
+
+	for rows.Next() {
+		rows.Scan(&temBarrage.Id,&temDate,&temBarrage.VideoTime,&temBarrage.UsersId,&temBarrage.Content,&temBarrage.Type,
+			&temBarrage.Size,&temBarrage.Pattern,&temBarrage.Color)
+		//获取DateTime
+		temBarrage.DateTime = temDate.Format("2006-01-02 15:04:05")
+
+		res = append(res,temBarrage)
+	}
+
+	return &res
 }
