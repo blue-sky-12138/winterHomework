@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/blue-sky-12138/winterHomework/compare/v1.2.0...v1.3.0) (2021-02-15)
+
+
+### Features
+
+* **get barrage:** you can get videos_barrage with bv_code and p ([5abff8d](https://github.com/blue-sky-12138/winterHomework/commit/5abff8d329610d3c192a93f436817d0e1e12669b))
+
 ## [1.2.0](https://github.com/blue-sky-12138/winterHomework/compare/v1.0.1...v1.2.0) (2021-02-10)
 
 
