@@ -2,6 +2,7 @@ package utilities
 
 //用于登录验证密码是否正确
 type LoginCheck struct {
+	Id int64															//用户的Id，用于设置cookie
 	Name string 	`json:"username" form:"username" xml:"username"`	//登录的用户名/邮箱/手机号
 	Password string `json:"password" form:"password" xml:"password"`	//登录密码
 	Md5salt  int64														//密码的md5盐

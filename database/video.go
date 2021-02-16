@@ -7,33 +7,36 @@ import (
 	"time"
 )
 
-//获取视频id
-func VideosId(bvCode string) int64 {
+//获取视频id。
+func VideosId(bvCode string) (int64, error) {
 	var id int64
 	pre := fmt.Sprintf("select id from videos_information where bv_code = '%s' ",bvCode)
 	rows,err := DB.Query(pre)
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetVideoId Error",err)
+		return 0, fmt.Errorf("未知错误")
 	}
 
 	if rows.Next(){
 		rows.Scan(&id)
 	}
-	return id
+	return id, nil
 }
 
-//获取视频地址
-//p为分集数
-func VideoPath(videoId int64) *[]utilities.VideoPathInformation {
+//获取视频地址。
+//p为分集数。
+func VideoPath(videoId int64) (*[]utilities.VideoPathInformation, error) {
 	var (
 		res []utilities.VideoPathInformation		//返回结果
 		tem utilities.VideoPathInformation			//临时存储获取的地址
 	)
 	pre := fmt.Sprintf("select video_path,video_name from videos_path where videos_id = %d ",videoId)
 	rows,err := DB.Query(pre)
+	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetVideoPath Error",err)
+		return nil, fmt.Errorf("未知错误")
 	}
 
 	if rows.Next() {
@@ -41,11 +44,11 @@ func VideoPath(videoId int64) *[]utilities.VideoPathInformation {
 		res = append(res,tem)
 	}
 
-	return &res
+	return &res, nil
 }
 
-//获取视频的详细信息
-func DetailedVideoInformation(bvCode string) *utilities.VideoInformation {
+//获取视频的详细信息。
+func DetailedVideoInformation(bvCode string) (*utilities.VideoInformation,error) {
 	var (
 		res utilities.VideoInformation
 		mapAuthor utilities.VideoAuthorInformation		//视频作者信息结构体
@@ -57,10 +60,12 @@ func DetailedVideoInformation(bvCode string) *utilities.VideoInformation {
 	preMeta := "select id,cover_path,title,brief,plays,date_time,p,author_id,joint_work " +
 		fmt.Sprintf("from videos_information where bv_code = '%s'",bvCode)
 	rowsMeta,err := DB.Query(preMeta)
+	defer rowsMeta.Close()
 	if err != nil {
 		utilities.LogError("GetDetailedVideoMeta Error",err)
+		return nil, fmt.Errorf("未知错误")
 	}
-	defer rowsMeta.Close()
+
 	if rowsMeta.Next() {
 		rowsMeta.Scan(&res.Id,&res.CoverPath,&res.Title,&res.Brief,&res.Plays,&temTime,&res.P,&mapAuthor.Id,&jointWork)
 	}
@@ -69,10 +74,17 @@ func DetailedVideoInformation(bvCode string) *utilities.VideoInformation {
 
 	//获取视频制作人信息
 	if jointWork == 0 {		//如果不是联合投稿
-		getCommonVideoAuthorInformation(&mapAuthor)
-		res.Author = append(res.Author,mapAuthor)
+		if getCommonVideoAuthorInformation(&mapAuthor) == nil {		//如果返回空，即获取数据成功
+			res.Author = append(res.Author,mapAuthor)		//添加数据到结果中
+		}else {
+			return nil, fmt.Errorf("未知错误")
+		}
 	}else {					//如果是联合投稿
-		getJointVideoAuthorInformation(&res.Id,&res.Author)
+		if getJointVideoAuthorInformation(&res.Id,&res.Author) == nil {		//如果返回为空，即获取数据成功
+					//无需操作，已在函数中完成添加
+		}else {
+			return nil, fmt.Errorf("未知错误")
+		}
 	}
 
 	//获取视频的点赞数、投币数、收藏数、分享数
@@ -82,54 +94,64 @@ func DetailedVideoInformation(bvCode string) *utilities.VideoInformation {
 	defer rowsCommon.Close()
 	if err != nil {
 		utilities.LogError("GetDetailedVideoCommon Error",err)
+		return nil, fmt.Errorf("未知错误")
 	}
 	if rowsCommon.Next(){
 		rowsCommon.Scan(&res.Likes,&res.Coins,&res.Collections,&res.Shares)
 	}
 
 	//获取评论总数
-	getCommentsCounts(&res.Id,&res.CommentNumbers)
+	if getCommentsCounts(&res.Id,&res.CommentNumbers) == nil {		//如果返回为空，即获取数据成功
+		//无需操作，已在函数中完成添加
+	}else {
+		return nil, fmt.Errorf("未知错误")
+	}
 
-	return &res
+	return &res, nil
 }
-//仅在本包使用
-//获取视频信息的附属组件
-//获取非联合投稿视频的作者信息
-func getCommonVideoAuthorInformation(author *utilities.VideoAuthorInformation) {
+//仅在本包使用。
+//获取视频信息的附属组件。
+//获取非联合投稿视频的作者信息。
+func getCommonVideoAuthorInformation(author *utilities.VideoAuthorInformation) error {
 	pre := fmt.Sprintf("select name,signature,vip,level,head_path from users_information where id = %d",author.Id)
 	rows,err := DB.Query(pre)
+	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetCommonVideoAuthorInformation Error",err)
+		return fmt.Errorf("未知错误")
 	}
 
 	if rows.Next(){
 		rows.Scan(&author.Name,&author.Signature,&author.Vip,&author.Level,&author.HeadPath)
 	}
+	return nil
 }
-//仅在本包使用
-//获取视频信息的附属组件
-//获取联合投稿视频的作者信息
-func getJointVideoAuthorInformation(videoId *int64, author *[]utilities.VideoAuthorInformation) {
+//仅在本包使用。
+//获取视频信息的附属组件。
+//获取联合投稿视频的作者信息。
+func getJointVideoAuthorInformation(videoId *int64, author *[]utilities.VideoAuthorInformation) error {
 	var mapAuthor utilities.VideoAuthorInformation
 	pre := "select u.id,u.name,u.vip,u.head_path,t.detail from " +
 		"(joint_video_relationship j inner join users_information u " +
 		fmt.Sprintf("on j.videos_id = %d and j.authors_id = u.id) ",*videoId) +
 		"inner join targets_details t on j.position_id = t.target_id"
 	rows,err := DB.Query(pre)
+	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetJointVideoAuthorInformation Error",err)
+		return fmt.Errorf("未知错误")
 	}
 
 	for rows.Next(){
 		rows.Scan(&mapAuthor.Id,&mapAuthor.Name,&mapAuthor.Vip,&mapAuthor.HeadPath,&mapAuthor.Position)
 		*author = append(*author,mapAuthor)
 	}
+	return nil
 }
-
-//仅在本包使用
-//获取视频信息的附属组件
-//获视视频评论数
-func getCommentsCounts(videoId *int64,counts *int64) {
+//仅在本包使用。
+//获取视频信息的附属组件。
+//获视视频评论数。
+func getCommentsCounts(videoId *int64,counts *int64) error {
 	pre := "select count(m.id) count_id from videos_meta_comments m " +
 		fmt.Sprintf("where m.video_id = %d ",*videoId) +
 		"union all select count(r.id) count_id from videos_reply_comments r " +
@@ -138,6 +160,7 @@ func getCommentsCounts(videoId *int64,counts *int64) {
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetCommentsCounts Error",err)
+		return fmt.Errorf("未知错误")
 	}
 
 	var tem int64
@@ -145,13 +168,14 @@ func getCommentsCounts(videoId *int64,counts *int64) {
 		rows.Scan(&tem)
 		*counts += tem
 	}
+	return nil
 }
 
 
-//获取视频的简要信息
-//start表示从第几条开始获取，count表示一共获取几条
-//如果count为零，则返回
-func BriefVideoInformation(start int,count int) *[]utilities.VideoInformation {
+//获取视频的简要信息。
+//start表示从第几条开始获取，count表示一共获取几条。
+//如果count为零，则返回。
+func BriefVideoInformation(start int,count int) (*[]utilities.VideoInformation, error) {
 	var (
 		tem utilities.VideoInformation
 		res []utilities.VideoInformation
@@ -163,17 +187,18 @@ func BriefVideoInformation(start int,count int) *[]utilities.VideoInformation {
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetBriefVideoInformation Error",err)
+		return nil, fmt.Errorf("未知错误")
 	}
 
 	for rows.Next(){
 		rows.Scan(&tem.BvCode,&tem.CoverPath,&tem.Title,&tem.Brief,&tem.Plays)
 		res=append(res,tem)
 	}
-	return &res
+	return &res, nil
 }
 
-//获取视频评论
-func VideoComments(videoId int64,limit string) *[]utilities.MetaComment {
+//获取视频评论。
+func VideoComments(videoId int64,limit string) (*[]utilities.MetaComment, error) {
 	var(
 		temMeta utilities.MetaComment									//存储一级评论的临时体
 		temReply utilities.ReplyComment									//存储楼中楼评论的临时体
@@ -195,6 +220,7 @@ func VideoComments(videoId int64,limit string) *[]utilities.MetaComment {
 	defer rowsMeta.Close()
 	if err != nil {
 		utilities.LogError("GetVideoMetaComments Error",err)
+		return nil, fmt.Errorf("未知错误")
 	}
 
 	for rowsMeta.Next(){
@@ -205,13 +231,19 @@ func VideoComments(videoId int64,limit string) *[]utilities.MetaComment {
 		//查询是否已存有该ID的用户信息
 		value,ok = mapAuthor[temMeta.Author.Id]
 		if ok{						//如果查询存在，直接赋值
-			temMeta.Author=  value
+			temMeta.Author = value
 		}else{						//如果不在，进行查找并添加到map中
-			commentAuthorInformation(&temMeta.Author)
-			mapAuthor[temMeta.Author.Id] = temMeta.Author
+			if commentAuthorInformation(&temMeta.Author) == nil {		//如果返回为空，即正常
+				mapAuthor[temMeta.Author.Id] = temMeta.Author
+			}else {
+				return nil, fmt.Errorf("未知错误")
+			}
 		}
 		//获取点赞总数
-		temMeta.Likes=*commentLikes(0,&temMeta.Id)
+		temMeta.Likes, err = commentLikes(0,&temMeta.Id)
+		if err == nil {		//如果返回为空，即正常
+			return nil, fmt.Errorf("未知错误")
+		}
 
 		//获取楼中楼评论
 		preReply := "select id,date_time,content,author_id,reply_author_id from videos_reply_comments " +
@@ -219,6 +251,7 @@ func VideoComments(videoId int64,limit string) *[]utilities.MetaComment {
 		rowsReply,err = DB.Query(preReply)
 		if err != nil {
 			utilities.LogError("GetVideoReplyComment Error",err)
+			return nil, fmt.Errorf("未知错误")
 		}
 
 		for rowsReply.Next(){
@@ -231,8 +264,11 @@ func VideoComments(videoId int64,limit string) *[]utilities.MetaComment {
 			if ok{						//如果查询存在，直接赋值
 				temReply.Author = value
 			}else{						//如果不在，进行查找并添加到map中
-				commentAuthorInformation(&temReply.Author)
-				mapAuthor[temReply.Author.Id] = temReply.Author
+				if commentAuthorInformation(&temReply.Author) == nil {		//如果返回为空，即返回正常
+					mapAuthor[temReply.Author.Id] = temReply.Author
+				}else {
+					return nil, fmt.Errorf("未知错误")
+				}
 			}
 			//获取被评论者用户信息
 			//查询是否已存有该ID的用户信息
@@ -244,37 +280,43 @@ func VideoComments(videoId int64,limit string) *[]utilities.MetaComment {
 				mapAuthor[temReply.ReplyAuthor.Id] = temReply.ReplyAuthor
 			}
 			//获取点赞总数
-			temReply.Likes = *commentLikes(1,&temReply.Id)
-			//添加到回复切片
-			temMeta.ReplyComments = append(temMeta.ReplyComments,temReply)
+			temReply.Likes, err = commentLikes(1,&temReply.Id)
+			if err == nil {		//如果返回为空，即正常
+				//添加到回复切片
+				temMeta.ReplyComments = append(temMeta.ReplyComments,temReply)
+			}else {
+				return nil, fmt.Errorf("未知错误")
+			}
 		}
 		rowsReply.Close()
 
 		//添加到结果切片
 		res = append(res,temMeta)
 	}
-	return &res
+	return &res, nil
 }
-//仅在本包使用
-//获取视频评论的附属组件
-//获取视频评论的用户的简要信息，用于获取视频评论时快捷获取其用户信息
-func commentAuthorInformation(author *utilities.CommentsAuthorInformation)  {
+//仅在本包使用。
+//获取视频评论的附属组件。
+//获取视频评论的用户的简要信息，用于获取视频评论时快捷获取其用户信息。
+func commentAuthorInformation(author *utilities.CommentsAuthorInformation) error {
 	preAuthor := fmt.Sprintf("select name,vip,level from users_information where id = %d",author.Id)
 	rowsAuthor,err := DB.Query(preAuthor)
 	defer rowsAuthor.Close()
 	if err != nil {
 		utilities.LogError("GetCommentAuthor Error",err)
+		return fmt.Errorf("未知错误")
 	}
 
 	if rowsAuthor.Next(){
 		rowsAuthor.Scan(&author.Name,&author.Vip,&author.Level)
 	}
+	return nil
 }
-//仅在本包使用
-//获取视频评论的附属组件
-//获取视频评论的点赞数
-//commentType中，0为元评论，1为楼中楼评论
-func commentLikes(commentType int, commentId *int64) *int64 {
+//仅在本包使用。
+//获取视频评论的附属组件。
+//获取视频评论的点赞数。
+//commentType中，0为元评论，1为楼中楼评论。
+func commentLikes(commentType int, commentId *int64) (int64, error) {
 	var sum int64
 	pre := "select sum(likes) as likes_sum from likes_videos_comments_relationship " +
 		fmt.Sprintf("where comments_id = %d and comments_type = %d and likes = 1",*commentId,commentType)
@@ -282,17 +324,18 @@ func commentLikes(commentType int, commentId *int64) *int64 {
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetCommentLikes Error",err)
+		return 0, fmt.Errorf("未知错误")
 	}
 
 	if rows.Next(){
 		rows.Scan(&sum)
 	}
-	return &sum
+	return sum, nil
 }
 
-//获取视频的弹幕
-//p为分集数
-func VideoBarrages(videoId int64,p int) *[]utilities.VideoBarrage {
+//获取视频的弹幕。
+//p为分集数。
+func VideoBarrages(videoId int64,p int) (*[]utilities.VideoBarrage, error) {
 	var (
 		res []utilities.VideoBarrage  		//返回结果
 		temBarrage	utilities.VideoBarrage	//临时存储获取的弹幕信息
@@ -303,6 +346,7 @@ func VideoBarrages(videoId int64,p int) *[]utilities.VideoBarrage {
 	rows,err := DB.Query(pre)
 	if err != nil {
 		utilities.LogError("GetVideoBarrages Error",err)
+		return nil, fmt.Errorf("未知错误")
 	}
 
 	for rows.Next() {
@@ -314,5 +358,5 @@ func VideoBarrages(videoId int64,p int) *[]utilities.VideoBarrage {
 		res = append(res,temBarrage)
 	}
 
-	return &res
+	return &res, nil
 }

@@ -21,8 +21,8 @@ func RoutersEntrance(){
 
 	user := router.Group("/serve/user")							//用户服务
 	{
-		user.POST("/login", serve.PostLogin)				//登录
-		user.POST("/register", serve.Register)			//注册
+		user.POST("/login", serve.Login)				//登录
+		user.POST("/register", serve.Register)		//注册
 		//user.PUT("/serve/user/update", serve.Update)			//更新个人信息
 	}
 
