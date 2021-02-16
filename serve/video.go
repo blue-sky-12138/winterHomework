@@ -58,15 +58,18 @@ func GetVideoInformation(context *gin.Context) {
 	videoType := context.Query("type")
 
 	if videoType == "1" {			//视频的简要信息
-		data, err := model.GetBriefVideoInformation("",0,0)
-		if err == ""  {
+		target := context.Query("target")
+		count,_ := strconv.Atoi(context.Query("count"))
+
+		data, err := model.GetBriefVideoInformation(target,count)
+		if err == nil  {
 			resp.Code = 600
 			resp.Message = "响应成功"
 			resp.Data["data"] = data
 			context.JSON(200,resp)
 		}else {
 			resp.Code = 60002
-			resp.Message = err
+			resp.Message = err.Error()
 			context.JSON(200,resp)
 		}
 	}else if videoType == "2" {		//视频的详细信息

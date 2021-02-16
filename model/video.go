@@ -3,16 +3,35 @@ package model
 import (
 	"WinterHomework/database"
 	"WinterHomework/utilities"
+	"fmt"
 )
 
 //获取视频简要信息。
-func GetBriefVideoInformation(target string, start int, end int) (_ *utilities.VideoInformation, err string) {
-
-	return nil, ""
+//count表示一共要获取几条数据，最多获取1000条，若为0则默认获取1000条。
+//target为搜索关键词。
+func GetBriefVideoInformation(target string, count int) (*[]utilities.BriefVideoInformation, error) {
+	if count == 0 {
+		data , err := database.BriefVideoInformation(target,"limit 0,1000")
+		if err != nil {
+			return nil, err
+		}else {
+			return data, nil
+		}
+	}else if count > 0 && count <= 1000{
+		limit := fmt.Sprintf("limit 0,%d",count)
+		data , err := database.BriefVideoInformation(target,limit)
+		if err != nil {
+			return nil, err
+		}else {
+			return data, nil
+		}
+	}else {					//如果count不在0~1000区间内
+		return nil, fmt.Errorf("输入的数值不合法")
+	}
 }
 
 //获取视频详情。
-func GetDetailedVideoInformation(bvCode string) (*utilities.VideoInformation, error) {
+func GetDetailedVideoInformation(bvCode string) (*utilities.DetailedVideoInformation, error) {
 	data, err := database.DetailedVideoInformation(bvCode)
 	if err == nil {			//如果为空
 		return data, nil

@@ -48,12 +48,13 @@ func VideoPath(videoId int64) (*[]utilities.VideoPathInformation, error) {
 }
 
 //获取视频的详细信息。
-func DetailedVideoInformation(bvCode string) (*utilities.VideoInformation,error) {
+func DetailedVideoInformation(bvCode string) (*utilities.DetailedVideoInformation,error) {
 	var (
-		res utilities.VideoInformation
-		mapAuthor utilities.VideoAuthorInformation		//视频作者信息结构体
-		jointWork int									//判断是否为联合投稿
-		temTime time.Time								//用于接收mysql中的日期数据
+		id int64												//临时存储视频id
+		res utilities.DetailedVideoInformation					//返回结果
+		mapAuthor utilities.DetailedVideoAuthorInformation		//视频作者信息结构体
+		jointWork int											//判断是否为联合投稿
+		temTime time.Time										//用于接收mysql中的日期数据
 	)
 
 	//获取视频元数据
@@ -67,7 +68,7 @@ func DetailedVideoInformation(bvCode string) (*utilities.VideoInformation,error)
 	}
 
 	if rowsMeta.Next() {
-		rowsMeta.Scan(&res.Id,&res.CoverPath,&res.Title,&res.Brief,&res.Plays,&temTime,&res.P,&mapAuthor.Id,&jointWork)
+		rowsMeta.Scan(&id,&res.CoverPath,&res.Title,&res.Brief,&res.Plays,&temTime,&res.P,&mapAuthor.Id,&jointWork)
 	}
 	//获取时间
 	res.Date = temTime.Format("2006-01-02 15:04:05")
@@ -80,7 +81,7 @@ func DetailedVideoInformation(bvCode string) (*utilities.VideoInformation,error)
 			return nil, fmt.Errorf("未知错误")
 		}
 	}else {					//如果是联合投稿
-		if getJointVideoAuthorInformation(&res.Id,&res.Author) == nil {		//如果返回为空，即获取数据成功
+		if getJointVideoAuthorInformation(&id,&res.Author) == nil {		//如果返回为空，即获取数据成功
 					//无需操作，已在函数中完成添加
 		}else {
 			return nil, fmt.Errorf("未知错误")
@@ -89,7 +90,7 @@ func DetailedVideoInformation(bvCode string) (*utilities.VideoInformation,error)
 
 	//获取视频的点赞数、投币数、收藏数、分享数
 	preCommon := "select sum(o.likes),sum(o.coins),sum(o.collections),sum(o.shares) from users_operate_videos_relationship o " +
-		fmt.Sprintf("where o.videos_id = %d",res.Id)
+		fmt.Sprintf("where o.videos_id = %d",id)
 	rowsCommon,err := DB.Query(preCommon)
 	defer rowsCommon.Close()
 	if err != nil {
@@ -101,7 +102,7 @@ func DetailedVideoInformation(bvCode string) (*utilities.VideoInformation,error)
 	}
 
 	//获取评论总数
-	if getCommentsCounts(&res.Id,&res.CommentNumbers) == nil {		//如果返回为空，即获取数据成功
+	if getCommentsCounts(&id,&res.CommentNumbers) == nil {		//如果返回为空，即获取数据成功
 		//无需操作，已在函数中完成添加
 	}else {
 		return nil, fmt.Errorf("未知错误")
@@ -112,7 +113,7 @@ func DetailedVideoInformation(bvCode string) (*utilities.VideoInformation,error)
 //仅在本包使用。
 //获取视频信息的附属组件。
 //获取非联合投稿视频的作者信息。
-func getCommonVideoAuthorInformation(author *utilities.VideoAuthorInformation) error {
+func getCommonVideoAuthorInformation(author *utilities.DetailedVideoAuthorInformation) error {
 	pre := fmt.Sprintf("select name,signature,vip,level,head_path from users_information where id = %d",author.Id)
 	rows,err := DB.Query(pre)
 	defer rows.Close()
@@ -129,8 +130,8 @@ func getCommonVideoAuthorInformation(author *utilities.VideoAuthorInformation) e
 //仅在本包使用。
 //获取视频信息的附属组件。
 //获取联合投稿视频的作者信息。
-func getJointVideoAuthorInformation(videoId *int64, author *[]utilities.VideoAuthorInformation) error {
-	var mapAuthor utilities.VideoAuthorInformation
+func getJointVideoAuthorInformation(videoId *int64, author *[]utilities.DetailedVideoAuthorInformation) error {
+	var mapAuthor utilities.DetailedVideoAuthorInformation
 	pre := "select u.id,u.name,u.vip,u.head_path,t.detail from " +
 		"(joint_video_relationship j inner join users_information u " +
 		fmt.Sprintf("on j.videos_id = %d and j.authors_id = u.id) ",*videoId) +
@@ -173,16 +174,16 @@ func getCommentsCounts(videoId *int64,counts *int64) error {
 
 
 //获取视频的简要信息。
-//start表示从第几条开始获取，count表示一共获取几条。
-//如果count为零，则返回。
-func BriefVideoInformation(start int,count int) (*[]utilities.VideoInformation, error) {
+//target为搜索关键词，limit为额外的附加限制。
+func BriefVideoInformation(target string, limit string) (*[]utilities.BriefVideoInformation, error) {
 	var (
-		tem utilities.VideoInformation
-		res []utilities.VideoInformation
+		temInf utilities.BriefVideoInformation		//存储单条信息的临时存储变量
+		res []utilities.BriefVideoInformation		//返回结果
+		temDateTime time.Time						//存储时间的临时存储变量
 	)
-	pre:="select v.bv_code,v.cover_path,v.title,v.plays,v.date_time,v.author_id,u.name" +
+	pre:="select v.bv_code,v.cover_path,v.title,v.plays,v.date_time,v.author_id,u.name " +
 		"from videos_information v join users_information u on v.author_id = u.id " +
-		fmt.Sprintf("order by plays desc limit %d,%d",start,count)
+		fmt.Sprintf("where match(v.title) against ('%s' in natural language mode ) ",target) + limit
 	rows,err:=DB.Query(pre)
 	defer rows.Close()
 	if err != nil {
@@ -191,8 +192,11 @@ func BriefVideoInformation(start int,count int) (*[]utilities.VideoInformation, 
 	}
 
 	for rows.Next(){
-		rows.Scan(&tem.BvCode,&tem.CoverPath,&tem.Title,&tem.Brief,&tem.Plays)
-		res=append(res,tem)
+		rows.Scan(&temInf.BvCode,&temInf.CoverPath,&temInf.Title,&temInf.Plays,&temDateTime,&temInf.Author.Id,&temInf.Author.Name)
+		//获取视频发布时间
+		temInf.Date = temDateTime.Format("2006-01-02 15:04:05")
+
+		res=append(res,temInf)
 	}
 	return &res, nil
 }
