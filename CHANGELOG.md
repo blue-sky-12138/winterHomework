@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.4.2](https://github.com/blue-sky-12138/winterHomework/compare/v1.4.1...v1.4.2) (2021-02-17)
+
+
+### Bug Fixes
+
+* **get mutiple_p_video_path:** fix that it noly returns the first p and without p's information ([a295e17](https://github.com/blue-sky-12138/winterHomework/commit/a295e170b783644f9b5455066819565f41427914))
+
 ### [1.4.1](https://github.com/blue-sky-12138/winterHomework/compare/v1.4.0...v1.4.1) (2021-02-17)
 
 ### style Changes
