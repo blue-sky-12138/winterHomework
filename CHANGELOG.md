@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [1.3.2](https://github.com/blue-sky-12138/winterHomework/compare/v1.3.1...v1.3.2) (2021-02-16)
 
+### style Changes
+
+* **all:**model and database's func all will return error if meet any([5ed8bdf](https://github.com/blue-sky-12138/winterHomework/commit/5ed8bdf0085323a41f33e6ad6d5c73c1f0301eb8)) 
+
 ### [1.3.1](https://github.com/blue-sky-12138/winterHomework/compare/v1.3.0...v1.3.1) (2021-02-15)
 
 

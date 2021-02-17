@@ -13,7 +13,7 @@ func GetPassword(focus string,detail string) (*utilities.LoginCheck, error) {
 	defer rows.Close()
 	if err != nil{
 		utilities.LogError("GetPassword Error",err)
-		return nil, fmt.Errorf("未知错误")
+		return nil, fmt.Errorf("未知错误#gp0016")
 	}
 	if rows.Next(){
 		rows.Scan(&tem.Id,&tem.Password,&tem.Md5salt)
@@ -29,13 +29,13 @@ func LogRegisterData(name string, telephone int64, email string, password string
 	defer stmt.Close()
 	if err != nil {
 		utilities.LogError("Prepare LogRegisterData Error",err)
-		return fmt.Errorf("未知错误")
+		return fmt.Errorf("未知错误#lrd0032")
 	}
 
 	_,err=stmt.Exec()
 	if err != nil {
 		utilities.LogError("Insert LogRegisterData Error",err)
-		return fmt.Errorf("未知错误")
+		return fmt.Errorf("未知错误#lgd0038")
 	}
 
 	return nil
@@ -49,7 +49,7 @@ func GetUserSingleInformation(require string, focus string, detail string) (stri
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetUserSingleInformation Error",err)
-		return "", false, fmt.Errorf("未知错误")
+		return "", false, fmt.Errorf("未知错误#gusi0052")
 	}
 	var tem string
 	if rows.Next(){			//如果查询到数据
@@ -66,7 +66,7 @@ func ChangeUserInformation(name string,focus string,detail string) error {
 	stmt,err:=DB.Prepare(pre)
 	if err!=nil{
 		utilities.LogError("ChangeUserInformation Error",err)
-		return fmt.Errorf("未知错误")
+		return fmt.Errorf("未知错误#cui0069")
 	}
 	stmt.Exec()
 	return nil

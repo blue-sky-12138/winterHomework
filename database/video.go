@@ -15,7 +15,7 @@ func VideosId(bvCode string) (int64, error) {
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetVideoId Error",err)
-		return 0, fmt.Errorf("未知错误")
+		return 0, fmt.Errorf("未知错误#vi0018")
 	}
 
 	if rows.Next(){
@@ -36,7 +36,7 @@ func VideoPath(videoId int64) (*[]utilities.VideoPathInformation, error) {
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetVideoPath Error",err)
-		return nil, fmt.Errorf("未知错误")
+		return nil, fmt.Errorf("未知错误#vp0039")
 	}
 
 	if rows.Next() {
@@ -64,7 +64,7 @@ func DetailedVideoInformation(bvCode string) (*utilities.DetailedVideoInformatio
 	defer rowsMeta.Close()
 	if err != nil {
 		utilities.LogError("GetDetailedVideoMeta Error",err)
-		return nil, fmt.Errorf("未知错误")
+		return nil, fmt.Errorf("未知错误#dvi0067")
 	}
 
 	if rowsMeta.Next() {
@@ -75,16 +75,18 @@ func DetailedVideoInformation(bvCode string) (*utilities.DetailedVideoInformatio
 
 	//获取视频制作人信息
 	if jointWork == 0 {		//如果不是联合投稿
-		if getCommonVideoAuthorInformation(&mapAuthor) == nil {		//如果返回空，即获取数据成功
+		err = getCommonVideoAuthorInformation(&mapAuthor)
+		if err == nil {		//如果返回空，即获取数据成功
 			res.Author = append(res.Author,mapAuthor)		//添加数据到结果中
 		}else {
-			return nil, fmt.Errorf("未知错误")
+			return nil, err
 		}
 	}else {					//如果是联合投稿
-		if getJointVideoAuthorInformation(&id,&res.Author) == nil {		//如果返回为空，即获取数据成功
+		err = getJointVideoAuthorInformation(&id,&res.Author)
+		if err == nil {		//如果返回为空，即获取数据成功
 					//无需操作，已在函数中完成添加
 		}else {
-			return nil, fmt.Errorf("未知错误")
+			return nil, err
 		}
 	}
 
@@ -95,17 +97,18 @@ func DetailedVideoInformation(bvCode string) (*utilities.DetailedVideoInformatio
 	defer rowsCommon.Close()
 	if err != nil {
 		utilities.LogError("GetDetailedVideoCommon Error",err)
-		return nil, fmt.Errorf("未知错误")
+		return nil, fmt.Errorf("未知错误#dvi0098")
 	}
 	if rowsCommon.Next(){
 		rowsCommon.Scan(&res.Likes,&res.Coins,&res.Collections,&res.Shares)
 	}
 
 	//获取评论总数
-	if getCommentsCounts(&id,&res.CommentNumbers) == nil {		//如果返回为空，即获取数据成功
+	err = getCommentsCounts(&id,&res.CommentNumbers)
+	if err == nil {		//如果返回为空，即获取数据成功
 		//无需操作，已在函数中完成添加
 	}else {
-		return nil, fmt.Errorf("未知错误")
+		return nil, err
 	}
 
 	return &res, nil
@@ -119,7 +122,7 @@ func getCommonVideoAuthorInformation(author *utilities.DetailedVideoAuthorInform
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetCommonVideoAuthorInformation Error",err)
-		return fmt.Errorf("未知错误")
+		return fmt.Errorf("未知错误#gcvai0122")
 	}
 
 	if rows.Next(){
@@ -140,7 +143,7 @@ func getJointVideoAuthorInformation(videoId *int64, author *[]utilities.Detailed
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetJointVideoAuthorInformation Error",err)
-		return fmt.Errorf("未知错误")
+		return fmt.Errorf("未知错误#gjvai0143")
 	}
 
 	for rows.Next(){
@@ -161,7 +164,7 @@ func getCommentsCounts(videoId *int64,counts *int64) error {
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetCommentsCounts Error",err)
-		return fmt.Errorf("未知错误")
+		return fmt.Errorf("未知错误#gcc0164")
 	}
 
 	var tem int64
@@ -188,7 +191,7 @@ func BriefVideoInformation(target string, limit string) (*[]utilities.BriefVideo
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetBriefVideoInformation Error",err)
-		return nil, fmt.Errorf("未知错误")
+		return nil, fmt.Errorf("未知错误#bvi0194")
 	}
 
 	for rows.Next(){
@@ -224,7 +227,7 @@ func VideoComments(videoId int64,limit string) (*[]utilities.MetaComment, error)
 	defer rowsMeta.Close()
 	if err != nil {
 		utilities.LogError("GetVideoMetaComments Error",err)
-		return nil, fmt.Errorf("未知错误")
+		return nil, fmt.Errorf("未知错误#vc0230")
 	}
 
 	for rowsMeta.Next(){
@@ -237,16 +240,18 @@ func VideoComments(videoId int64,limit string) (*[]utilities.MetaComment, error)
 		if ok{						//如果查询存在，直接赋值
 			temMeta.Author = value
 		}else{						//如果不在，进行查找并添加到map中
-			if commentAuthorInformation(&temMeta.Author) == nil {		//如果返回为空，即正常
+			err = commentAuthorInformation(&temMeta.Author)
+			if err == nil {		//如果返回为空，即正常
 				mapAuthor[temMeta.Author.Id] = temMeta.Author
 			}else {
-				return nil, fmt.Errorf("未知错误")
+				return nil, err
 			}
 		}
+
 		//获取点赞总数
 		temMeta.Likes, err = commentLikes(0,&temMeta.Id)
-		if err == nil {		//如果返回为空，即正常
-			return nil, fmt.Errorf("未知错误")
+		if err != nil {		//如果返回不为空
+			return nil, err
 		}
 
 		//获取楼中楼评论
@@ -255,7 +260,7 @@ func VideoComments(videoId int64,limit string) (*[]utilities.MetaComment, error)
 		rowsReply,err = DB.Query(preReply)
 		if err != nil {
 			utilities.LogError("GetVideoReplyComment Error",err)
-			return nil, fmt.Errorf("未知错误")
+			return nil, fmt.Errorf("未知错误#vc0262")
 		}
 
 		for rowsReply.Next(){
@@ -268,10 +273,11 @@ func VideoComments(videoId int64,limit string) (*[]utilities.MetaComment, error)
 			if ok{						//如果查询存在，直接赋值
 				temReply.Author = value
 			}else{						//如果不在，进行查找并添加到map中
-				if commentAuthorInformation(&temReply.Author) == nil {		//如果返回为空，即返回正常
+				err = commentAuthorInformation(&temReply.Author)
+				if err == nil {		//如果返回为空，即返回正常
 					mapAuthor[temReply.Author.Id] = temReply.Author
 				}else {
-					return nil, fmt.Errorf("未知错误")
+					return nil, err
 				}
 			}
 			//获取被评论者用户信息
@@ -280,8 +286,12 @@ func VideoComments(videoId int64,limit string) (*[]utilities.MetaComment, error)
 			if ok{						//如果查询存在，直接赋值
 				temReply.ReplyAuthor = value
 			}else{						//如果不在，进行查找并添加到map中
-				commentAuthorInformation(&temReply.ReplyAuthor)
-				mapAuthor[temReply.ReplyAuthor.Id] = temReply.ReplyAuthor
+				err = commentAuthorInformation(&temReply.ReplyAuthor)
+				if err != nil {
+					return nil, err
+				}else {
+					mapAuthor[temReply.ReplyAuthor.Id] = temReply.ReplyAuthor
+				}
 			}
 			//获取点赞总数
 			temReply.Likes, err = commentLikes(1,&temReply.Id)
@@ -289,7 +299,7 @@ func VideoComments(videoId int64,limit string) (*[]utilities.MetaComment, error)
 				//添加到回复切片
 				temMeta.ReplyComments = append(temMeta.ReplyComments,temReply)
 			}else {
-				return nil, fmt.Errorf("未知错误")
+				return nil, fmt.Errorf("未知错误#vc0297")
 			}
 		}
 		rowsReply.Close()
@@ -308,7 +318,7 @@ func commentAuthorInformation(author *utilities.CommentsAuthorInformation) error
 	defer rowsAuthor.Close()
 	if err != nil {
 		utilities.LogError("GetCommentAuthor Error",err)
-		return fmt.Errorf("未知错误")
+		return fmt.Errorf("未知错误#cai0316")
 	}
 
 	if rowsAuthor.Next(){
@@ -328,12 +338,13 @@ func commentLikes(commentType int, commentId *int64) (int64, error) {
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetCommentLikes Error",err)
-		return 0, fmt.Errorf("未知错误")
+		return 0, fmt.Errorf("未知错误#cl0336")
 	}
 
 	if rows.Next(){
 		rows.Scan(&sum)
 	}
+
 	return sum, nil
 }
 
@@ -350,7 +361,7 @@ func VideoBarrages(videoId int64,p int) (*[]utilities.VideoBarrage, error) {
 	rows,err := DB.Query(pre)
 	if err != nil {
 		utilities.LogError("GetVideoBarrages Error",err)
-		return nil, fmt.Errorf("未知错误")
+		return nil, fmt.Errorf("未知错误#vb0359")
 	}
 
 	for rows.Next() {
