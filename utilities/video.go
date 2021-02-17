@@ -71,6 +71,7 @@ type BriefVideoInformation struct {
 
 //视频路径信息结构体
 type VideoPathInformation struct {
+	P int 		`json:"p"`		//第几分p
 	Path string	`json:"path"`	//视频地址
 	Name string `json:"name"`	//视频名
 }

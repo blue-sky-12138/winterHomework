@@ -4,18 +4,22 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### [1.4.1](https://github.com/blue-sky-12138/winterHomework/compare/v1.4.0...v1.4.1) (2021-02-17)
 
+### style Changes
+
+* **all database's func:** errors will display where it appear with func_inital_acronym and line ([68c06c0](https://github.com/blue-sky-12138/winterHomework/commit/68c06c0215325bcf1d8c67ace7e00ca9e61b45a2))
+
 ## [1.4.0](https://github.com/blue-sky-12138/winterHomework/compare/v1.3.2...v1.4.0) (2021-02-16)
 
 
 ### Features
 
-* **get brief_video_information:** get brief_video_information with search_taget by fuzzy_search ([8f94111](https://github.com/blue-sky-12138/winterHomework/commit/8f941113dad3757594890828b23deace7003813a))
+* **get brief_video_information:** get brief_video_information with search_target by fuzzy_search ([8f94111](https://github.com/blue-sky-12138/winterHomework/commit/8f941113dad3757594890828b23deace7003813a))
 
 ### [1.3.2](https://github.com/blue-sky-12138/winterHomework/compare/v1.3.1...v1.3.2) (2021-02-16)
 
 ### style Changes
 
-* **all:**model and database's func all will return error if meet any([5ed8bdf](https://github.com/blue-sky-12138/winterHomework/commit/5ed8bdf0085323a41f33e6ad6d5c73c1f0301eb8)) 
+* **all:** model and database's func all will return error if meet any([5ed8bdf](https://github.com/blue-sky-12138/winterHomework/commit/5ed8bdf0085323a41f33e6ad6d5c73c1f0301eb8)) 
 
 ### [1.3.1](https://github.com/blue-sky-12138/winterHomework/compare/v1.3.0...v1.3.1) (2021-02-15)
 

@@ -25,13 +25,12 @@ func VideosId(bvCode string) (int64, error) {
 }
 
 //获取视频地址。
-//p为分集数。
 func VideoPath(videoId int64) (*[]utilities.VideoPathInformation, error) {
 	var (
 		res []utilities.VideoPathInformation		//返回结果
 		tem utilities.VideoPathInformation			//临时存储获取的地址
 	)
-	pre := fmt.Sprintf("select video_path,video_name from videos_path where videos_id = %d ",videoId)
+	pre := fmt.Sprintf("select p,video_path,video_name from videos_path where videos_id = %d ",videoId)
 	rows,err := DB.Query(pre)
 	defer rows.Close()
 	if err != nil {
@@ -39,8 +38,8 @@ func VideoPath(videoId int64) (*[]utilities.VideoPathInformation, error) {
 		return nil, fmt.Errorf("未知错误#vp0039")
 	}
 
-	if rows.Next() {
-		rows.Scan(&tem.Path,&tem.Name)
+	for rows.Next() {
+		rows.Scan(&tem.P,&tem.Path,&tem.Name)
 		res = append(res,tem)
 	}
 
