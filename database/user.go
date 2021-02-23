@@ -1,4 +1,4 @@
-package database
+﻿package database
 
 import (
 	"WinterHomework/utilities"
@@ -8,8 +8,8 @@ import (
 //获取密码。
 func GetPassword(focus string,detail string) (*utilities.LoginCheck, error) {
 	var tem utilities.LoginCheck
-	pre:=fmt.Sprintf("select id,password,md5salt from users_information where %s =%s",focus,detail)
-	rows,err:=DB.Query(pre)
+	pre := fmt.Sprintf("select id,password,md5salt from users_information where %s =%s",focus,detail)
+	rows,err := DB.Query(pre)
 	defer rows.Close()
 	if err != nil{
 		utilities.LogError("GetPassword Error",err)
@@ -23,9 +23,9 @@ func GetPassword(focus string,detail string) (*utilities.LoginCheck, error) {
 
 //录入注册信息。
 func LogRegisterData(name string, telephone int64, email string, password string, MD5salt int64) error {
-	pre:=fmt.Sprintf("insert users_information(name,telephone,email,password,md5salt) value('%s',%v,'%s','%s',%v)",
+	pre := fmt.Sprintf("insert users_information(name,telephone,email,password,md5salt) value('%s',%v,'%s','%s',%v)",
 		name,telephone,email,password,MD5salt)
-	stmt,err:=DB.Prepare(pre)
+	stmt,err := DB.Prepare(pre)
 	defer stmt.Close()
 	if err != nil {
 		utilities.LogError("Prepare LogRegisterData Error",err)
@@ -44,8 +44,8 @@ func LogRegisterData(name string, telephone int64, email string, password string
 //获取某个用户的某个信息。
 //返回：数据（如果查找到），是否查询到目标信息，错误（如果遇到）。
 func GetUserSingleInformation(require string, focus string, detail string) (string, bool, error) {
-	pre:=fmt.Sprintf("select %s from users_information where %s =%s",require,focus,detail)
-	rows,err:=DB.Query(pre)
+	pre := fmt.Sprintf("select %s from users_information where %s =%s",require,focus,detail)
+	rows,err := DB.Query(pre)
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetUserSingleInformation Error",err)
@@ -61,13 +61,32 @@ func GetUserSingleInformation(require string, focus string, detail string) (stri
 }
 
 //更新用户信息。
-func ChangeUserInformation(name string,focus string,detail string) error {
-	pre:=fmt.Sprintf("update users_information set %s = %s where name = '%s' ",focus,detail,name)
-	stmt,err:=DB.Prepare(pre)
-	if err!=nil{
+func ChangeUserInformation(userId int64, focus string, detail string) error {
+	pre := fmt.Sprintf("update users_information set %s = %s where id = %d ",focus,detail,userId)
+	stmt,err := DB.Prepare(pre)
+	if err != nil{
 		utilities.LogError("ChangeUserInformation Error",err)
 		return fmt.Errorf("未知错误#cui0069")
 	}
 	stmt.Exec()
 	return nil
+}
+
+//获取用户头像
+func UserHeadPath(userId int64) (string, error) {
+	var res string
+	pre := fmt.Sprintf("select head_path from users_information where id = %d",userId)
+	rows,err := DB.Query(pre)
+	defer rows.Close()
+	if err != nil {
+		utilities.LogError("GetUserHeadPath Error",err)
+		return "", fmt.Errorf("未知错误#uhp0082")
+	}
+
+
+	if rows.Next() {
+		rows.Scan(&res)
+
+	}
+	return res, nil
 }

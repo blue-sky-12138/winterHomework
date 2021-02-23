@@ -1,4 +1,4 @@
-package database
+﻿package database
 
 import (
 	"WinterHomework/utilities"
@@ -54,11 +54,12 @@ func DetailedVideoInformation(bvCode string) (*utilities.DetailedVideoInformatio
 		mapAuthor utilities.DetailedVideoAuthorInformation		//视频作者信息结构体
 		jointWork int											//判断是否为联合投稿
 		temTime time.Time										//用于接收mysql中的日期数据
+		temTag string							//临时存储tag
 	)
 
 	//获取视频元数据
-	preMeta := "select id,cover_path,title,brief,plays,date_time,p,author_id,joint_work " +
-		fmt.Sprintf("from videos_information where bv_code = '%s'",bvCode)
+	preMeta := "select v.id,cover_path,title,brief,plays,date_time,p,author_id,joint_work,type,detailed,url " +
+		fmt.Sprintf("from videos_information v left join activity_detailed a on v.activity_id = a.activity_id where bv_code = '%s'",bvCode)
 	rowsMeta,err := DB.Query(preMeta)
 	defer rowsMeta.Close()
 	if err != nil {
@@ -67,10 +68,20 @@ func DetailedVideoInformation(bvCode string) (*utilities.DetailedVideoInformatio
 	}
 
 	if rowsMeta.Next() {
-		rowsMeta.Scan(&id,&res.CoverPath,&res.Title,&res.Brief,&res.Plays,&temTime,&res.P,&mapAuthor.Id,&jointWork)
+		rowsMeta.Scan(&id,&res.CoverPath,&res.Title,&res.Brief,&res.Plays,&temTime,&res.P,&mapAuthor.Id,&jointWork,
+			&res.Type,&res.Activity.Name,&res.Activity.Url)
 	}
+	fmt.Printf("%#v \n",res)
+
 	//获取时间
 	res.Date = temTime.Format("2006-01-02 15:04:05")
+
+	//更新视频是否参加了活动
+	if res.Activity.Name == "" {
+		res.Activity.Join = 0
+	}else {
+		res.Activity.Join = 1
+	}
 
 	//获取视频制作人信息
 	if jointWork == 0 {		//如果不是联合投稿
@@ -92,7 +103,7 @@ func DetailedVideoInformation(bvCode string) (*utilities.DetailedVideoInformatio
 	//获取视频的点赞数、投币数、收藏数、分享数
 	preCommon := "select sum(o.likes),sum(o.coins),sum(o.collections),sum(o.shares) from users_operate_videos_relationship o " +
 		fmt.Sprintf("where o.videos_id = %d",id)
-	rowsCommon,err := DB.Query(preCommon)
+	rowsCommon, err := DB.Query(preCommon)
 	defer rowsCommon.Close()
 	if err != nil {
 		utilities.LogError("GetDetailedVideoCommon Error",err)
@@ -100,6 +111,20 @@ func DetailedVideoInformation(bvCode string) (*utilities.DetailedVideoInformatio
 	}
 	if rowsCommon.Next(){
 		rowsCommon.Scan(&res.Likes,&res.Coins,&res.Collections,&res.Shares)
+	}
+
+	//获取视频tag
+	preTag := "select t.detailed from tags_videos_relation v inner join tags_detailed t " +
+		fmt.Sprintf("on v.videos_id = %d and v.tags_id = t.tags_id",id)
+	rowsTag, err := DB.Query(preTag)
+	if err != nil {
+		utilities.LogError("GetDetailedVideoTag Error",err)
+		return nil, fmt.Errorf("未知错误#dvi0098")
+	}
+	defer rowsTag.Close()
+	for rowsTag.Next() {
+		rowsTag.Scan(&temTag)
+		res.Tags = append(res.Tags,temTag)
 	}
 
 	//获取评论总数
@@ -137,7 +162,7 @@ func getJointVideoAuthorInformation(videoId *int64, author *[]utilities.Detailed
 	pre := "select u.id,u.name,u.vip,u.head_path,t.detail from " +
 		"(joint_video_relationship j inner join users_information u " +
 		fmt.Sprintf("on j.videos_id = %d and j.authors_id = u.id) ",*videoId) +
-		"inner join targets_details t on j.position_id = t.target_id"
+		"inner join targets_detailed t on j.position_id = t.target_id"
 	rows,err := DB.Query(pre)
 	defer rows.Close()
 	if err != nil {
@@ -247,15 +272,15 @@ func VideoComments(videoId int64,limit string) (*[]utilities.MetaComment, error)
 			}
 		}
 
-		//获取点赞总数
-		temMeta.Likes, err = commentLikes(0,&temMeta.Id)
+		//获取点赞总数和热度指数
+		temMeta.Likes, temMeta.Heat, err = commentLikes(0,&temMeta.Id)
 		if err != nil {		//如果返回不为空
 			return nil, err
 		}
 
 		//获取楼中楼评论
 		preReply := "select id,date_time,content,author_id,reply_author_id from videos_reply_comments " +
-			fmt.Sprintf("where reply_comment_id = %d ",temMeta.Id) + " order by id desc"
+			fmt.Sprintf("where reply_comment_id = %d ",temMeta.Id) + " order by id asc"
 		rowsReply,err = DB.Query(preReply)
 		if err != nil {
 			utilities.LogError("GetVideoReplyComment Error",err)
@@ -292,8 +317,7 @@ func VideoComments(videoId int64,limit string) (*[]utilities.MetaComment, error)
 					mapAuthor[temReply.ReplyAuthor.Id] = temReply.ReplyAuthor
 				}
 			}
-			//获取点赞总数
-			temReply.Likes, err = commentLikes(1,&temReply.Id)
+
 			if err == nil {		//如果返回为空，即正常
 				//添加到回复切片
 				temMeta.ReplyComments = append(temMeta.ReplyComments,temReply)
@@ -327,24 +351,27 @@ func commentAuthorInformation(author *utilities.CommentsAuthorInformation) error
 }
 //仅在本包使用。
 //获取视频评论的附属组件。
-//获取视频评论的点赞数。
+//获取视频评论的点赞数和热度数。
 //commentType中，0为元评论，1为楼中楼评论。
-func commentLikes(commentType int, commentId *int64) (int64, error) {
-	var sum int64
-	pre := "select sum(likes) as likes_sum from likes_videos_comments_relationship " +
+func commentLikes(commentType int, commentId *int64) (int, int, error) {
+	var (
+		likes int
+		dislikes int
+	)
+	pre := "select sum(if(likes = 1, 1, 0)),sum(if(likes = -1, 1, 0)) from likes_videos_comments_relationship " +
 		fmt.Sprintf("where comments_id = %d and comments_type = %d and likes = 1",*commentId,commentType)
 	rows,err := DB.Query(pre)
 	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetCommentLikes Error",err)
-		return 0, fmt.Errorf("未知错误#cl0336")
+		return 0, 0, fmt.Errorf("未知错误#cl0336")
 	}
 
 	if rows.Next(){
-		rows.Scan(&sum)
+		rows.Scan(&likes,&dislikes)
 	}
 
-	return sum, nil
+	return likes, likes - dislikes, nil
 }
 
 //获取视频的弹幕。
@@ -358,6 +385,7 @@ func VideoBarrages(videoId int64,p int) (*[]utilities.VideoBarrage, error) {
 	pre := "select id,date_time,video_time,users_id,content,type,size,pattern,color " +
 		fmt.Sprintf("from videos_barrages where videos_id = %d and p = %d",videoId,p)
 	rows,err := DB.Query(pre)
+	defer rows.Close()
 	if err != nil {
 		utilities.LogError("GetVideoBarrages Error",err)
 		return nil, fmt.Errorf("未知错误#vb0359")
@@ -373,4 +401,126 @@ func VideoBarrages(videoId int64,p int) (*[]utilities.VideoBarrage, error) {
 	}
 
 	return &res, nil
+}
+
+//获取用户对于视频的操作。
+func VideoOperateInformation(userId int64) (*utilities.OperateVideoInformation ,error) {
+	var res utilities.OperateVideoInformation
+	pre := fmt.Sprintf("select like,coin,collect,share from video_operation where user_id = %d",userId)
+	rows,err := DB.Query(pre)
+	defer rows.Close()
+	if err != nil {
+		utilities.LogError("GetVideoOperateInformation Error",err)
+		return nil, fmt.Errorf("未知错误#voi0381")
+	}
+	
+	if rows.Next() {
+		rows.Scan(&res.Like,&res.Coin,&res.Collect,&res.Share)
+	}
+	return &res, nil
+}
+
+//更新用户对于视频的操作。
+func UpdateVideoOperation(userId int64, videoId int64, focus string, detailed string) error {
+	var pre string
+	ok, err := checkOperation(userId, videoId)
+	if err != nil {
+		return err
+	}
+
+	if ok {		//如果存在记录，则直接更新
+		pre = fmt.Sprintf("update users_operate_videos_relationship set %s = %s where videos_id = %d and users_id = %d",
+		focus, detailed, videoId, userId)
+	}else {		//否则，新插入记录
+		pre = fmt.Sprintf("insert users_operate_videos_relationship (%s,videos_id,users_id) value (%s,%d,%d)",
+		focus, detailed, videoId, userId)
+	}	
+
+	stmt,err := DB.Prepare(pre)
+	defer stmt.Close()
+	if err != nil {
+		fmt.Println(pre)
+		utilities.LogError("PrepareUpdateVideoOperation Error",err)
+		return fmt.Errorf("未知错误#uvo0444")
+	}
+
+	_, err = stmt.Exec()
+	if err != nil {
+		utilities.LogError("ExecuteUpdateVideoOperation Error",err)
+		return err
+	}
+
+	return nil
+}
+//仅在本包使用
+//用于判断用户是否进行过操作
+func checkOperation(userId int64, videoId int64) (bool, error) {
+	pre := fmt.Sprintf("select id from users_operate_videos_relationship where videos_id = %d and users_id = %d",videoId, userId)
+	rows,err := DB.Query(pre)
+	defer rows.Close()
+	if err != nil {
+		utilities.LogError("CheckOperation Error",err)
+		return false,fmt.Errorf("未知错误#uvo0463")
+	}
+
+	if rows.Next(){
+		return true, nil
+	}
+
+	return false, nil
+}
+
+//添加元评论留言。
+func AddMetaComment(data *utilities.NewComment) error {
+	//获取楼层
+	preFloor :=fmt.Sprintf("select floor from videos_meta_comments where video_id = %d order by floor desc limit 1",data.VideoId)
+	rows, err := DB.Query(preFloor)
+	defer rows.Close()
+	if err != nil {
+		utilities.LogError("GetPrefloor Error",err)
+		return err
+	}
+	if rows.Next() {
+		var floor int
+		rows.Scan(&floor)
+		data.MetaFloor = floor
+	}
+
+	//正式添加评论
+	preAdd := fmt.Sprintf("insert videos_meta_comments (video_id,date_time,content,floor,author_id) value (%d,'%s','%s',%d,%d)",
+		data.VideoId, data.DateTime, data.Content, data.MetaFloor, data.AuthorId)
+	stmt, err := DB.Prepare(preAdd)
+	defer stmt.Close()
+	if err != nil {
+		utilities.LogError("PrepareAddMetaComment Error",err)
+		return err
+	}
+
+	_, err = stmt.Exec()
+	if err != nil {
+		utilities.LogError("ExecuteAddMetaComment Error",err)
+		return err
+	}
+
+	return nil
+}
+
+//添加回复留言。
+func AddReplyComment(data *utilities.NewComment) error {
+	pre := fmt.Sprintf("insert videos_reply_comments (video_id,reply_comment_id,date_time,content,author_id,reply_author_id) value (%d,%d,'%s','%s',%d,%d)",
+		data.VideoId, data.ReplyCommentId, data.DateTime, data.Content, data.AuthorId, data.ReplyAuthorId)
+	stmt, err := DB.Prepare(pre)
+	defer stmt.Close()
+	if err != nil {
+		utilities.LogError("PrepareAddReplyCommentError",err)
+		return err
+	}
+
+	_, err = stmt.Exec()
+	if err != nil {
+		utilities.LogError("ExecuteAddReplyComment Error",err)
+		return err
+	}
+
+	return nil
 }

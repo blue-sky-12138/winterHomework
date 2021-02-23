@@ -1,8 +1,8 @@
 package control
 
 import (
-	"WinterHomework/serve"
 	"WinterHomework/middleware"
+	"WinterHomework/serve"
 	"github.com/gin-gonic/gin"
 	"io"
 	"os"
@@ -19,11 +19,11 @@ func RoutersEntrance(){
 	router.StaticFile("favicon.ico", "./static/favicon.ico")	//加载网页图标
 	router.Use(middleware.Cors())								//跨域中间件
 
-	user := router.Group("/serve/user")							//用户服务
+	user := router.Group("/serve/user")				//用户服务
 	{
-		user.POST("/login", serve.Login)				//登录
-		user.POST("/register", serve.Register)		//注册
-		//user.PUT("/serve/user/update", serve.Update)			//更新个人信息
+		user.POST("/login", serve.Login)					//登录
+		user.POST("/register", serve.Register)			//注册
+		user.PUT("/update", serve.Update)				//更新个人信息
 	}
 
 	video := router.Group("/serve/video")					//视频服务
@@ -32,6 +32,8 @@ func RoutersEntrance(){
 		video.GET("/information", serve.GetVideoInformation)		//获取视频的元数据
 		video.GET("/barrage",serve.GetVideoBarrages)				//获取视频弹幕
 		video.GET("/path",serve.GetVideoPath)					//获取视频地址
+		video.PUT("/operation",serve.OperateVideo)				//用户对视频进行点赞等操作
+		video.POST("/comment",serve.AddComment)					//添加评论
 	}
 
 	download := router.Group("/serve/download")
@@ -43,7 +45,9 @@ func RoutersEntrance(){
 
 	upload := router.Group("/serve/upload")
 	{
-		upload.PUT("/user/head")
+		upload.PUT("/user/head",serve.UpdateUserHead)				//更新用户头像
+		upload.POST("/video/file_one",serve.UploadVideoOne)			//上传单个视频(投稿)
+		upload.POST("/video/file_more",serve.UploadVideoMore)		//上传多个视频(投稿)
 	}
 
 	router.Run(":8000")

@@ -30,7 +30,7 @@
   },
   "config": {
     "commitizen": {
-      "path": "C:/now/RedRock/web-after/node_modules/cz-conventional-changelog"
+      "path": "D:/redrock-web-after/node_modules/cz-conventional-changelog"
     }
   }
 }

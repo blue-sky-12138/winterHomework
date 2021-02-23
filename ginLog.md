@@ -6,25 +6,17 @@
 
 [GIN-debug] GET    /static/*filepath         --> github.com/gin-gonic/gin.(*RouterGroup).createStaticHandler.func1 (3 handlers)
 [GIN-debug] HEAD   /static/*filepath         --> github.com/gin-gonic/gin.(*RouterGroup).createStaticHandler.func1 (3 handlers)
-[GIN-debug] POST   /serve/login              --> WinterHomework/serve.PostLogin (4 handlers)
-[GIN-debug] POST   /serve/register           --> WinterHomework/serve.Register (4 handlers)
+[GIN-debug] GET    /favicon.ico              --> github.com/gin-gonic/gin.(*RouterGroup).StaticFile.func1 (3 handlers)
+[GIN-debug] HEAD   /favicon.ico              --> github.com/gin-gonic/gin.(*RouterGroup).StaticFile.func1 (3 handlers)
+[GIN-debug] POST   /serve/user/login         --> WinterHomework/serve.Login (4 handlers)
+[GIN-debug] POST   /serve/user/register      --> WinterHomework/serve.Register (4 handlers)
 [GIN-debug] GET    /serve/video/comment      --> WinterHomework/serve.GetVideoComments (4 handlers)
-[GIN-debug] GET    /serve/video              --> WinterHomework/serve.GetVideoInformation (4 handlers)
-[GIN-debug] GET    /serve/video/file/:bvCode/:fileName --> WinterHomework/serve.GetVideoFile (4 handlers)
+[GIN-debug] GET    /serve/video/information  --> WinterHomework/serve.GetVideoInformation (4 handlers)
+[GIN-debug] GET    /serve/video/barrage      --> WinterHomework/serve.GetVideoBarrages (4 handlers)
+[GIN-debug] GET    /serve/video/path         --> WinterHomework/serve.GetVideoPath (4 handlers)
+[GIN-debug] GET    /serve/download/user/head/:id/:fileName --> WinterHomework/serve.GetUserHead (4 handlers)
+[GIN-debug] GET    /serve/download/video/cover/:bvCode/:fileName --> WinterHomework/serve.GetVideoFile (4 handlers)
+[GIN-debug] GET    /serve/download/video/file/:bvCode/:fileName --> WinterHomework/serve.GetVideoFile (4 handlers)
+[GIN-debug] PUT    /serve/upload/user/head   --> WinterHomework/middleware.Cors.func1 (3 handlers)
 [GIN-debug] Listening and serving HTTP on :8000
-[GIN] 2021/02/07 - 11:45:09 | 404 |            0s |             ::1 | GET      "/static/BV1No4y1d7tA/FLAC.gif"
-[GIN] 2021/02/07 - 11:45:32 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:33 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:34 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:34 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:35 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:35 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:36 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:37 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:37 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:38 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:38 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:39 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:40 | 404 |            0s |             ::1 | GET      "/favicon.ico"
-[GIN] 2021/02/07 - 11:45:56 | 404 |      1.2053ms |             ::1 | GET      "/serve/video/file/BV1No4y1d7tA/FLAC.gif"
-[GIN] 2021/02/07 - 11:46:22 | 200 |    851.4885ms |             ::1 | GET      "/serve/video/file/BV1No4y1d7tA/FLAC.gif"
+[GIN] 2021/02/23 - 09:02:21 | 200 |    1.0696271s |             ::1 | GET      "/serve/video/information?bv_code=BV1No4y1d7tA&type=2"

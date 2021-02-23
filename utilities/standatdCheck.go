@@ -5,8 +5,8 @@ import (
 	"strconv"
 )
 
-//注册手机号正确性检查
-func RegisterTelephoneCheck(number int64) bool {
+//手机号正确性检查.
+func TelephoneCheck(number int64) bool {
 	reg:=regexp.MustCompile("(13|14|15|17|18|19)[0-9]{9}")
 	if reg.MatchString(strconv.FormatInt(number,10)){
 		return true
@@ -15,9 +15,9 @@ func RegisterTelephoneCheck(number int64) bool {
 	}
 }
 
-//注册用户名有效性检查
-//只能包括数字、字母、汉字的组合，且不能只包含数字
-func RegisterUserNameCheck(name string) bool {
+//用户名有效性检查.
+//只能包括数字、字母、汉字的组合，且不能只包含数字.
+func UserNameCheck(name string) bool {
 	reg:=regexp.MustCompile("[^A-Za-z0-9\u4e00-\u9fa5]")
 	if !reg.MatchString(name) {
 		reg=regexp.MustCompile("[^0-9]")
@@ -30,8 +30,8 @@ func RegisterUserNameCheck(name string) bool {
 	}
 }
 
-//邮箱正确性检测
-func RegisterEmailCheck(email string) bool {
+//邮箱正确性检测.
+func EmailCheck(email string) bool {
 	reg:=regexp.MustCompile("\\w[-\\w.+]*@([A-Za-z0-9][-A-Za-z0-9]+\\.)+[A-Za-z]{2,14}")
 	if reg.MatchString(email){
 		return true
@@ -40,9 +40,9 @@ func RegisterEmailCheck(email string) bool {
 	}
 }
 
-//注册密码规范性检查
-//最少8位,最多16位，只能包括数字、字母、下划线
-func RegisterPasswordCheck(password string) bool {
+//密码规范性检查.
+//最少8位,最多16位，只能包括数字、字母、下划线.
+func PasswordCheck(password string) bool {
 	reg:=regexp.MustCompile("[^\\w]")
 	if len(password) >= 8 && len(password) <= 16 && !reg.MatchString(password){
 		return true

@@ -74,7 +74,7 @@ func Register(context *gin.Context){
 
 	//检查邮箱的正确性、是否存在
 	if tem.Email != ""{
-		if !utilities.RegisterEmailCheck(tem.Email){
+		if !utilities.EmailCheck(tem.Email){
 			resp.Code = 30002
 			resp.Message = "邮箱错误"
 			context.JSON(200,resp)
@@ -97,7 +97,7 @@ func Register(context *gin.Context){
 
 	//检查手机号的正确性、是否存在
 	if tem.Telephone != 0 {
-		if !utilities.RegisterTelephoneCheck(tem.Telephone){
+		if !utilities.TelephoneCheck(tem.Telephone){
 			resp.Code = 30002
 			resp.Message = "手机号错误"
 			context.JSON(200,resp)
@@ -120,7 +120,7 @@ func Register(context *gin.Context){
 
 	//检查用户名的正确性、是否存在
 	if tem.Name!= ""{
-		if !utilities.RegisterUserNameCheck(tem.Name){
+		if !utilities.UserNameCheck(tem.Name){
 			resp.Code = 30002
 			resp.Message = "用户名不符合要求"
 			context.JSON(200,resp)
@@ -142,7 +142,7 @@ func Register(context *gin.Context){
 	}
 
 	//检查密码规范性
-	if !utilities.RegisterPasswordCheck(tem.Password){
+	if !utilities.PasswordCheck(tem.Password){
 		resp.Code = 30002
 		resp.Message = "密码不规范"
 		context.JSON(200,resp)
@@ -161,4 +161,52 @@ func Register(context *gin.Context){
 		resp.Message = "未知错误"
 		context.JSON(200,resp)
 	}
+}
+
+func Update(context *gin.Context) {
+	var (
+		resp utilities.Resp
+		err error
+	)
+
+	userId, _ := strconv.ParseInt(context.Query("user_id"),10,64)	//用户id
+	operateType, _ := strconv.Atoi(context.Query("type"))						//操作类型
+	content := context.Query("content")										//更改成什么内容
+
+	//简单排除类型错误
+	if operateType > 6 || operateType < 1 {
+		resp.Code = 12001
+		resp.Message = "类型不合法"
+		context.JSON(200,resp)
+		return
+	}
+
+	if operateType == 1 {			//更新手机号
+		newTele, _ := strconv.ParseInt(content,10,64)
+		if utilities.TelephoneCheck(newTele) {
+			err = model.ChangeUserTelephone(userId,newTele)
+		}
+	}else if operateType == 2 {		//更新邮箱
+		if utilities.EmailCheck(content) {
+			err = model.ChangeUserEmail(userId,content)
+		}
+	}else if operateType == 3 {		//更新昵称
+		if utilities.UserNameCheck(content) {
+			err = model.ChangeUserNickname(userId,content)
+		}
+	}else if operateType == 4 {		//更新签名
+		err = model.ChangeUserSignature(userId,content)
+	}
+
+	//操作错误集中检测
+	if err != nil {
+		resp.Code = 12002
+		resp.Message = "未知错误"
+		context.JSON(200,resp)
+		return
+	}
+
+	resp.Code = 1200
+	resp.Message = "更新成功"
+	context.JSON(200,resp)
 }
